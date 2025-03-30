@@ -1,10 +1,11 @@
 import './App.css'
+import {StartScreen} from "../StartScreen/StartScreen.jsx"
 
 function App() {
 
   return (
     <>
-      <h1>Welcome to the React App</h1>
+      <StartScreen/>
     </>
   )
 }
