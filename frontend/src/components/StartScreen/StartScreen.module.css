@@ -8,12 +8,14 @@ body{
     flex-direction: column;
     height: 100vh;
 }
-.greetings{
-    /* display: flex;
+.greeting{
+    display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center; */
+    align-items: center;
 }
 .sign {
-    position: relative;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
 }
