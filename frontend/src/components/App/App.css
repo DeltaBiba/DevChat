@@ -1,0 +1,10 @@
+.App {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(
+    160deg,
+    var(--black),
+    var(--dark-gray),
+    var(--gray)
+  );
+  color: var(--gray);
+}
