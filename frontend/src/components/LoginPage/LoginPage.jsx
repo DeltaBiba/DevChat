@@ -55,11 +55,11 @@ export const LoginPage = () => {
               <p className={styles.error}>{errors.password.message}</p>
             )}
           </div>
-
-          <button type="submit" className={styles.button}>
-            Login
-          </button>
-
+          <Link to="/chat">
+            <button type="submit" className={styles.button}>
+              Login
+            </button>
+          </Link>
           <p className={styles.registerPrompt}>
             Don't have an account?
             <Link to="/register" className={styles.registerLink}>
