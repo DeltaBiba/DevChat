@@ -120,3 +120,58 @@ Thumbs.db
 !.nvmrc
 !.phpcs.xml.dist
 .idea
+
+
+# Виртуальное окружение
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Файлы логов
+*.log
+
+# Локальные настройки
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# База данных
+*.db
+*.sqlite
+*.sqlite3
+
+# Временные файлы
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Директории дистрибутива
+dist/
+build/
+*.egg-info/
+
+# Файлы с JWT-токенами или другими секретами
+*.pem
+*.key
+
+# Файлы миграций (опционально, в зависимости от вашего подхода)
+# alembic/versions/
+
+# Документация, сгенерированная автоматически
+docs/_build/
+site/
