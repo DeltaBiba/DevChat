@@ -1,21 +1,63 @@
-body{
+  body {
     margin: 0;
-}
-.container{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(160deg, var(--black), var(--dark-gray), var(--gray));
+    color: var(--gray);
+  }
+  
+  .container {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     height: 100vh;
-}
-.greeting{
+    position: relative;
+    text-align: center;
+  }
+  
+  .greeting {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-}
-.sign {
+    font-size: 22px;
+  }
+  
+  .button {
+    margin-top: 5px;
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: var(--blue);
+    color: var(--black);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .button:hover {
+    background-color: var(--dark-blue);
+    transform: scale(1.05);
+  }
+  
+  .sign {
     position: absolute;
     bottom: 20px;
     left: 20px;
-}
+    color: var(--gray);
+    text-align: left;
+  }
+  
+  .sign h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--blue);
+  }
+  
+  .sign h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: normal;
+    color: var(--gray);
+  }
+  
