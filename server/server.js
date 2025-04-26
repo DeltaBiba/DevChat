@@ -3,28 +3,13 @@ const { pool } = require("./database");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
+const { initializeDatabase } = require("./dbinit");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors())
 
-
-const createUsersTable = async () => {
-  try{
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-          user_id SERIAL PRIMARY KEY,
-          username VARCHAR(50) NOT NULL UNIQUE,
-          password VARCHAR(255) NOT NULL
-      )
-    `)
-  } catch (error) {
-    console.error("Error creating users table:", error);
-  }
-}
-
-createUsersTable();
 
 
 app.post("/api/register", async (req, res) => {
@@ -66,6 +51,19 @@ app.post("/api/register", async (req, res) => {
 })
 
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`Server is running on port ${process.env.PORT || 3000}`);
-});
+async function startServer() {
+  try {
+    await initializeDatabase();
+    
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(PORT);
+    });
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+
+startServer();
