@@ -127,7 +127,7 @@ venv/
 env/
 ENV/
 .venv/
-.env/
+server/.env/
 
 # Кэш Python
 __pycache__/
@@ -141,7 +141,7 @@ htmlcov/
 *.log
 
 # Локальные настройки
-.env
+server/.env
 .env.local
 .env.development.local
 .env.test.local
