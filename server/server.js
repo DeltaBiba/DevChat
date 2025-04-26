@@ -55,7 +55,7 @@ app.post("/api/register", async (req, res) => {
       message: "User created successfully",
       user: {
         id: newUser.user_id,
-        username: newUser.rows[0].username,
+        username: newUser.username,
       },
       token,
     });

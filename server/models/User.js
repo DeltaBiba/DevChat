@@ -1,7 +1,6 @@
 const db = require("../database");
 const bcrypt = require("bcrypt");
 
-
 class User {
   static async findById(id) {
     try {
