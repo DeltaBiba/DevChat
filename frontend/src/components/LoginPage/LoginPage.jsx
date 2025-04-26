@@ -20,22 +20,17 @@ export const LoginPage = () => {
         <h2 className={styles.title}>Login to chat</h2>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className={styles.formGroup}>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="username">Username</label>
             <input
-              id="email"
-              type="email"
+              id="username"
+              type="username"
               className={styles.input}
-              {...register("email", {
+              {...register("username", {
                 required: true,
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "invalid email address",
-                },
+              
               })}
             />
-            {errors.email && (
-              <p className={styles.error}>{errors.email.message}</p>
-            )}
+
           </div>
 
           <div className={styles.formGroup}>
