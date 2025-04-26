@@ -1,10 +1,9 @@
-const db = require("../database");
-const bcrypt = require("bcrypt");
+const { pool } = require("../database");const bcrypt = require("bcrypt");
 
 class User {
   static async findById(id) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         "SELECT user_id, username FROM users WHERE user_id = $1",
         [id]
       );
@@ -17,7 +16,7 @@ class User {
 
   static async findByUsername(username) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         "SELECT user_id, username FROM users WHERE username = $1",
         [username]
       );
@@ -32,7 +31,7 @@ class User {
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      const result = await db.query(
+      const result = await pool.query(
         "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING user_id, username",
         [username, hashedPassword]
       );
