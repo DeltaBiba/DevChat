@@ -18,4 +18,4 @@ pool.connect((err, client, done) => {
   done();
 });
 
-///asdasasdassadsadasdsad
+module.exports = pool;

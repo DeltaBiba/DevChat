@@ -1,6 +1,7 @@
 const db = require("../database");
 const bcrypt = require("bcrypt");
-//HELLO
+
+
 class User {
   static async findById(id) {
     try {
@@ -43,3 +44,5 @@ class User {
     }
   }
 }
+
+module.exports = User;
