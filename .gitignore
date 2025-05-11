@@ -176,3 +176,5 @@ build/
 docs/_build/
 site/
 .yaml
+frontend/package-lock.json
+server/package-lock.json
