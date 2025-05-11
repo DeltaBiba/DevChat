@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const bcrypt = require("bcrypt");
 const { initializeDatabase } = require("./dbinit");
+const chatRoutes = require("./routes/chat");
 require("dotenv").config();
 
 const app = express();
@@ -73,7 +74,7 @@ app.post("/api/register", async (req, res) => {
     );
 
     if (userCheck.rows.length > 0) {
-      return res.status(200).json({ error: "User already exists" });
+      return res.status(409).json({ error: "User already exists" });
     }
 
     const newUser = await User.create(username, password);
@@ -84,7 +85,7 @@ app.post("/api/register", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.status(200).json({
+    res.status(201).json({
       message: "User created successfully",
       user: {
         id: newUser.user_id,
@@ -96,6 +97,12 @@ app.post("/api/register", async (req, res) => {
     console.error("Error registering user:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+app.use("/api/chats", chatRoutes);
+
+app.get("/api/status", (req, res) => {
+  res.status(200).json({ message: "Server is running" });
 });
 
 async function startServer() {
