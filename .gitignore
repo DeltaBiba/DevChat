@@ -178,3 +178,6 @@ site/
 .yaml
 frontend/package-lock.json
 server/package-lock.json
+server/pnpm-lock.yaml
+frontend/pnpm-lock.yaml
+server/pnpm-lock.yaml
