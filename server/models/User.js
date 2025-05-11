@@ -1,4 +1,5 @@
-const { pool } = require("../database");const bcrypt = require("bcrypt");
+const { pool } = require("../database");
+const bcrypt = require("bcrypt");
 
 class User {
   static async findById(id) {
