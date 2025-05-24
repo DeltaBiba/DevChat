@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
-import styles from "./LoginPage.module.css";
-import { loginUser } from "../../services/api";
 import { useAuth } from "../../auth/AuthContext";
+import styles from "./LoginPage.module.css";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loading: authLoading } = useAuth();
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const {
     register,
@@ -16,20 +18,48 @@ export const LoginPage = () => {
   } = useForm();
 
   const onSubmit = async (data) => {
-    try {
-      const { token } = await loginUser(data.username, data.password);
-      login(token); // зберігаємо токен
-      navigate("/chat"); // редирект після логіну
-    } catch (error) {
-      alert("Invalid username or password");
+    setIsLoading(true);
+    setApiError('');
+
+    const result = await login(data.username, data.password);
+    
+    if (result.success) {
+      navigate("/chat");
+    } else {
+      setApiError(result.error);
     }
+    
+    setIsLoading(false);
   };
+
+  if (authLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.formWrapper}>
+          <h2 className={styles.title}>Loading...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.formWrapper}>
         <h2 className={styles.title}>Login to chat</h2>
+        
         <form onSubmit={handleSubmit(onSubmit)}>
+          {apiError && (
+            <div className={styles.error} style={{
+              textAlign: 'center',
+              marginBottom: '15px',
+              padding: '10px',
+              backgroundColor: 'rgba(255, 107, 107, 0.1)',
+              borderRadius: '6px'
+            }}>
+              {apiError}
+            </div>
+          )}
+          
           <div className={styles.formGroup}>
             <label htmlFor="username">Username</label>
             <input
@@ -64,8 +94,12 @@ export const LoginPage = () => {
             )}
           </div>
 
-          <button type="submit" className={styles.button}>
-            Login
+          <button
+            type="submit"
+            className={styles.button}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing in...' : 'Login'}
           </button>
 
           <p className={styles.registerPrompt}>

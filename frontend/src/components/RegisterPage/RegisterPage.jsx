@@ -1,28 +1,55 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import styles from "../LoginPage/LoginPage.module.css";
 import { Link, useNavigate } from "react-router-dom";
-import {registerUser} from "../../services/api"
+import { useAuth } from "../../auth/AuthContext";
+import styles from "../LoginPage/LoginPage.module.css";
 
 export const RegisterPage = () => {
+  const navigate = useNavigate();
+  const { register: registerUser } = useAuth();
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const navigate = useNavigate();
   const onSubmit = async (data) => {
-    await registerUser(data.username , data.password)
-    navigate("/login")
-    console.log(data);
+    setIsLoading(true);
+    setApiError('');
+
+    const result = await registerUser(data.username, data.password);
+    
+    if (result.success) {
+      navigate("/chat");
+    } else {
+      setApiError(result.error);
+    }
+    
+    setIsLoading(false);
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.formWrapper}>
         <h2 className={styles.title}>Registration</h2>
+        
         <form onSubmit={handleSubmit(onSubmit)}>
+          {apiError && (
+            <div className={styles.error} style={{
+              textAlign: 'center',
+              marginBottom: '15px',
+              padding: '10px',
+              backgroundColor: 'rgba(255, 107, 107, 0.1)',
+              borderRadius: '6px'
+            }}>
+              {apiError}
+            </div>
+          )}
+          
           <div className={styles.formGroup}>
             <label htmlFor="username">Username</label>
             <input
@@ -30,15 +57,14 @@ export const RegisterPage = () => {
               type="text"
               className={styles.input}
               {...register("username", {
-                required: true,
+                required: "Username is required",
                 minLength: {
                   value: 3,
                   message: "Username must be at least 3 characters",
                 },
                 pattern: {
                   value: /^[a-zA-Z0-9_]+$/,
-                  message:
-                    "Username can only contain letters, numbers and underscore",
+                  message: "Username can only contain letters, numbers and underscore",
                 },
               })}
             />
@@ -47,7 +73,6 @@ export const RegisterPage = () => {
             )}
           </div>
 
-
           <div className={styles.formGroup}>
             <label htmlFor="password">Password</label>
             <input
@@ -55,9 +80,10 @@ export const RegisterPage = () => {
               type="password"
               className={styles.input}
               {...register("password", {
-                required: true,
+                required: "Password is required",
                 minLength: {
                   value: 6,
+                  message: "Password must be at least 6 characters",
                 },
               })}
             />
@@ -66,12 +92,16 @@ export const RegisterPage = () => {
             )}
           </div>
 
-          <button type="submit" className={styles.button}>
-            Register
+          <button
+            type="submit"
+            className={styles.button}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Creating account...' : 'Register'}
           </button>
 
           <p className={styles.registerPrompt}>
-            If you have account, click here to
+            Already have an account?
             <Link to="/login" className={styles.registerLink}>
               Login
             </Link>
