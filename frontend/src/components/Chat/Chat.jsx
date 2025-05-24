@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import styles from "./Chat.module.css";
+import { useAuth } from "../../auth/AuthContext";
 
 export const Chat = () => {
+  const user = useAuth()
   const chats = [
     { id: 1, content: <h2>Chat 1</h2> },
     { id: 2, content: <h2>Chat 2</h2> },
@@ -36,6 +38,10 @@ export const Chat = () => {
 
   return (
     <div className={styles.chatContainer}>
+      <div className={styles.userBar}>
+        <span className={styles.username}>👤 {user.username}</span>
+      </div>
+      {console.log(user)}
       {/* Left panel - Chat list */}
       <div className={styles.chatList}>
         {chats.map((chat) => (
