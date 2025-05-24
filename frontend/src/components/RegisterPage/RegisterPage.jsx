@@ -1,7 +1,8 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import styles from "../LoginPage/LoginPage.module.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import {registerUser} from "../../services/api"
 
 export const RegisterPage = () => {
   const {
@@ -10,7 +11,10 @@ export const RegisterPage = () => {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
+  const navigate = useNavigate();
+  const onSubmit = async (data) => {
+    await registerUser(data.username , data.password)
+    navigate("/login")
     console.log(data);
   };
 
@@ -43,24 +47,6 @@ export const RegisterPage = () => {
             )}
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              className={styles.input}
-              {...register("email", {
-                required: true,
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "invalid email address",
-                },
-              })}
-            />
-            {errors.email && (
-              <p className={styles.error}>{errors.email.message}</p>
-            )}
-          </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="password">Password</label>

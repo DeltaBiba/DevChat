@@ -1,17 +1,28 @@
 import React from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate, Link } from "react-router-dom";
 import styles from "./LoginPage.module.css";
-import { Link } from "react-router-dom";
+import { loginUser } from "../../services/api";
+import { useAuth } from "../../auth/AuthContext";
 
 export const LoginPage = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const onSubmit = async (data) => {
+    try {
+      const { token } = await loginUser(data.username, data.password);
+      login(token); // зберігаємо токен
+      navigate("/chat"); // редирект після логіну
+    } catch (error) {
+      alert("Invalid username or password");
+    }
   };
 
   return (
@@ -23,14 +34,15 @@ export const LoginPage = () => {
             <label htmlFor="username">Username</label>
             <input
               id="username"
-              type="username"
+              type="text"
               className={styles.input}
               {...register("username", {
-                required: true,
-              
+                required: "Username is required",
               })}
             />
-
+            {errors.username && (
+              <p className={styles.error}>{errors.username.message}</p>
+            )}
           </div>
 
           <div className={styles.formGroup}>
@@ -40,9 +52,10 @@ export const LoginPage = () => {
               type="password"
               className={styles.input}
               {...register("password", {
-                required: true,
+                required: "Password is required",
                 minLength: {
                   value: 6,
+                  message: "Password must be at least 6 characters",
                 },
               })}
             />
@@ -50,11 +63,11 @@ export const LoginPage = () => {
               <p className={styles.error}>{errors.password.message}</p>
             )}
           </div>
-          <Link to="/chat">
-            <button type="submit" className={styles.button}>
-              Login
-            </button>
-          </Link>
+
+          <button type="submit" className={styles.button}>
+            Login
+          </button>
+
           <p className={styles.registerPrompt}>
             Don't have an account?
             <Link to="/register" className={styles.registerLink}>
