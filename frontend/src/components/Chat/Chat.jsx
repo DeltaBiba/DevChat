@@ -6,10 +6,18 @@ export const Chat = () => {
   const user = useAuth();
   const [chats, setChats] = useState([
     { id: 1, content: "Chat 1" },
-    { id: 2, content: "Chat 2" },
-    { id: 3, content: "Chat 3" },
-    { id: 4, content: "Chat 4" },
+
   ]);
+const handleAddChat = () => {
+  const name = prompt("Enter new chat name:");
+  if (name && name.trim()) {
+    const newChat = {
+      id: chats.length + 1,
+      content: name.trim()
+    };
+    setChats([...chats, newChat]);
+  }
+};
 
 const [editingTitle, setEditingTitle] = useState(false);
 const [chatTitleInput, setChatTitleInput] = useState("");
@@ -79,7 +87,8 @@ const handleTitleKeyDown = (e) => {
   return (
     <div className={styles.chatContainer}>
       {/* Left panel - Chat list */}
-      <div className={styles.chatList}>
+    <div className={styles.chatList}>
+      <div className={styles.chatItems}>
         {chats.map((chat) => (
           <div
             key={chat.id}
@@ -93,6 +102,12 @@ const handleTitleKeyDown = (e) => {
           </div>
         ))}
       </div>
+      <button className={styles.addChatButton} onClick={handleAddChat}>
+        ➕ Add Chat
+      </button>
+    </div>
+
+
 
       {/* Right panel - Chat window */}
       <div className={styles.chatWindow}>

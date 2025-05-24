@@ -202,3 +202,39 @@
   color: var(--gray);
   outline: none;
 }
+.addChatButton {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 14px 0;
+  text-align: center;
+  font-weight: bold;
+  color: var(--black); /* ← THIS LINE CHANGED */
+  background-color: transparent;
+  border-top: 2px solid var(--dark-gray);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.addChatButton:hover {
+  background-color: var(--dark-blue);
+  color: var(--blue);
+}
+
+.chatList {
+  width: 200px;
+  background-color: var(--blue);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.chatItems {
+  flex: 1;
+  overflow-y: auto;
+}
+
