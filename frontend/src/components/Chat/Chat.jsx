@@ -3,13 +3,53 @@ import styles from "./Chat.module.css";
 import { useAuth } from "../../auth/AuthContext";
 
 export const Chat = () => {
-  const user = useAuth()
-  const chats = [
-    { id: 1, content: <h2>Chat 1</h2> },
-    { id: 2, content: <h2>Chat 2</h2> },
-    { id: 3, content: <h2>Chat 3</h2> },
-    { id: 4, content: <h2>Chat 4</h2> },
-  ];
+  const user = useAuth();
+  const [chats, setChats] = useState([
+    { id: 1, content: "Chat 1" },
+    { id: 2, content: "Chat 2" },
+    { id: 3, content: "Chat 3" },
+    { id: 4, content: "Chat 4" },
+  ]);
+
+const [editingTitle, setEditingTitle] = useState(false);
+const [chatTitleInput, setChatTitleInput] = useState("");
+
+const handleTitleDoubleClick = () => {
+  if (selectedChat) {
+    setEditingTitle(true);
+    setChatTitleInput(selectedChat.content);
+  }
+};
+
+const handleTitleChange = (e) => {
+  setChatTitleInput(e.target.value);
+
+};
+
+const handleTitleBlur = () => {
+  if (chatTitleInput.trim()) {
+    // Update selectedChat
+    const updatedChat = { ...selectedChat, content: chatTitleInput };
+
+    // Update chat in list
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === updatedChat.id ? updatedChat : chat
+      )
+    );
+
+    // Set current chat to updated one
+    setSelectedChat(updatedChat);
+  }
+  setEditingTitle(false);
+};
+
+
+const handleTitleKeyDown = (e) => {
+  if (e.key === "Enter") {
+    handleTitleBlur();
+  }
+};
 
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -21,7 +61,7 @@ export const Chat = () => {
     if (input.trim() !== "") {
       const newMessage = {
         text: input,
-        sender: "me", // marking the message as "mine"
+        sender: "me",
       };
       setMessages([...messages, newMessage]);
       setInput("");
@@ -38,10 +78,6 @@ export const Chat = () => {
 
   return (
     <div className={styles.chatContainer}>
-      <div className={styles.userBar}>
-        <span className={styles.username}>👤 {user.username}</span>
-      </div>
-      {console.log(user)}
       {/* Left panel - Chat list */}
       <div className={styles.chatList}>
         {chats.map((chat) => (
@@ -50,17 +86,36 @@ export const Chat = () => {
             className={styles.chatItem}
             onClick={() => {
               setSelectedChat(chat);
-              setMessages([]); // optional: clear messages when switching chats
+              setMessages([]);
             }}
           >
-            {chat.content}
+            <h2>{chat.content}</h2>
           </div>
         ))}
       </div>
 
       {/* Right panel - Chat window */}
       <div className={styles.chatWindow}>
-        <h2>{selectedChat ? selectedChat.content : "Choose the chat"}</h2>
+        <div className={styles.chatHeader}>
+          <div className={styles.chatTitle} onDoubleClick={handleTitleDoubleClick}>
+            {editingTitle ? (
+              <input
+                className={styles.titleInput}
+                value={chatTitleInput}
+                onChange={handleTitleChange}
+                onBlur={handleTitleBlur}
+                onKeyDown={handleTitleKeyDown}
+                autoFocus
+              />
+            ) : (
+              <h2>{selectedChat ? selectedChat.content : "Choose the chat"}</h2>
+            )}
+          </div>
+
+          <div className={styles.userBar}>
+            <span className={styles.username}>👤 {user.user.username}</span>
+          </div>
+        </div>
 
         {/* Message display area */}
         <div className={styles.messageArea}>
