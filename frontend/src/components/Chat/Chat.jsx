@@ -3,7 +3,7 @@ import styles from "./Chat.module.css";
 import { useAuth } from "../../auth/AuthContext";
 
 export const Chat = () => {
-  const user = useAuth();
+  const {user} = useAuth();
   const [chats, setChats] = useState([
     { id: 1, content: "Chat 1" },
 
@@ -128,7 +128,7 @@ const handleTitleKeyDown = (e) => {
           </div>
 
           <div className={styles.userBar}>
-            <span className={styles.username}>👤 {user.user.username}</span>
+            <span className={styles.username}>👤 {user?.username}</span>
           </div>
         </div>
 
