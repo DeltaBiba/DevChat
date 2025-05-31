@@ -5,7 +5,7 @@ import { chatAPI } from "../../services/api";
 import { socketService } from "../../services/socket";
 
 export const Chat = () => {
-  const { user } = useAuth(); //asdasdasasd
+  const { user } = useAuth();
   
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -22,27 +22,42 @@ export const Chat = () => {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    loadChats();
-    
-    socketService.connect();
-    
-    socketService.onMessage((message) => {
-      if (selectedChat && message.chat_id === selectedChat.chat_id) {
-        setMessages(prev => [...prev, message]);
-      }
-    });
-    
-    return () => {
-      socketService.disconnect();
-    };
-  }, []);
+    if (user) {
+      loadChats();
+      socketService.connect();
+      
+      return () => {
+        socketService.disconnect();
+      };
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (selectedChat) {
+    const handleMessage = (message) => {
+      console.log('Received message:', message);
+      console.log('Current selectedChat:', selectedChat?.chat_id);
+      
+      if (selectedChat && message.chat_id === selectedChat.chat_id) {
+        console.log('Adding message to current chat');
+        setMessages(prev => [...prev, message]);
+      } else {
+        console.log('Message not for current chat');
+      }
+    };
+    
+    socketService.onMessage(handleMessage);
+    
+    return () => {
+      socketService.offMessage();
+    };
+  }, [selectedChat]);
+
+  useEffect(() => {
+    if (selectedChat && user) {
       loadMessages(selectedChat.chat_id);
       socketService.joinChat(selectedChat.chat_id);
     }
-  }, [selectedChat]);
+  }, [selectedChat, user]);
 
   useEffect(() => {
     scrollToBottom();
@@ -77,7 +92,6 @@ export const Chat = () => {
     
     setLoadingMessages(false);
   };
-  
 
   const handleCreateChatWithUser = async () => {
     const username = prompt("Enter username to chat with:");
@@ -85,21 +99,12 @@ export const Chat = () => {
     
     setError("");
     
-    const result = await chatAPI.createChatWithUser(username.trim());
+    const chatName = `Chat with ${username}`;
+    const result = await chatAPI.createChatByUsernames(chatName, [username.trim()]);
     
     if (result.success) {
-      if (result.data.existing) {
-        const existingChat = chats.find(chat => chat.chat_id === result.data.chat_id);
-        if (existingChat) {
-          setSelectedChat(existingChat);
-        } else {
-          setChats(prev => [...prev, result.data]);
-          setSelectedChat(result.data);
-        }
-      } else {
-        setChats(prev => [...prev, result.data]);
-        setSelectedChat(result.data);
-      }
+      setChats(prev => [...prev, result.data]);
+      setSelectedChat(result.data);
     } else {
       setError(`Failed to create chat with ${username}: ${result.error}`);
     }
@@ -147,6 +152,8 @@ export const Chat = () => {
     const messageText = input.trim();
     setInput("");
     
+    console.log('Sending message:', messageText, 'to chat:', selectedChat.chat_id);
+    
     socketService.sendMessage(
       selectedChat.chat_id,
       messageText,
@@ -163,6 +170,10 @@ export const Chat = () => {
     setSelectedChat(chat);
     setError("");
   };
+
+  if (!user) {
+    return <div className={styles.chatContainer}>Loading...</div>;
+  }
 
   return (
     <div className={styles.chatContainer}>
