@@ -5,7 +5,7 @@ import { chatAPI } from "../../services/api";
 import { socketService } from "../../services/socket";
 
 export const Chat = () => {
-  const { user } = useAuth();
+  const { user } = useAuth(); //asdasdasasd
   
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
