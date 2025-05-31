@@ -54,7 +54,7 @@ app.post("/api/login", async (req, res) => {
     const token = jwt.sign(
       { user_id: user.user_id, username },
       process.env.SECRET_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
     res.status(200).json({
@@ -213,6 +213,83 @@ app.post("/api/chats/by-usernames", authenticateToken, async (req, res) => {
 });
 
 
+app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query("BEGIN");
+    
+    const { username } = req.body;
+    const creatorId = req.user.user_id;
+    
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+    
+    const targetUser = await User.findByUsername(username);
+    if (!targetUser) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: `User '${username}' not found` });
+    }
+    
+    if (targetUser.user_id === creatorId) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Cannot create chat with yourself" });
+    }
+    
+    const existingChat = await client.query(`
+      SELECT c.chat_id, c.name, c.is_group
+      FROM chats c
+      JOIN chat_members cm1 ON c.chat_id = cm1.chat_id
+      JOIN chat_members cm2 ON c.chat_id = cm2.chat_id
+      WHERE c.is_group = false
+        AND cm1.user_id = $1
+        AND cm2.user_id = $2
+      LIMIT 1
+    `, [creatorId, targetUser.user_id]);
+    
+    if (existingChat.rowCount > 0) {
+      await client.query("ROLLBACK");
+      return res.status(200).json({
+        ...existingChat.rows[0],
+        message: "Chat already exists",
+        existing: true
+      });
+    }
+    
+    const chatName = `Chat with ${username}`;
+    const chatResult = await client.query(
+      `INSERT INTO chats (name, is_group) VALUES ($1, false) RETURNING *`,
+      [chatName]
+    );
+    
+    const chatId = chatResult.rows[0].chat_id;
+    
+    await client.query(
+      `INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2), ($1, $3)`,
+      [chatId, creatorId, targetUser.user_id]
+    );
+    
+    await client.query("COMMIT");
+    
+    console.log(`Created private chat between users ${creatorId} and ${targetUser.user_id}`);
+    
+    res.status(201).json({
+      ...chatResult.rows[0],
+      message: "Private chat created successfully",
+      existing: false
+    });
+    
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error creating private chat:", error);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    client.release();
+  }
+});
+
+
 app.use("/api/chats", chatRoutes);
 
 app.get("/api/status", (req, res) => {
@@ -220,17 +297,36 @@ app.get("/api/status", (req, res) => {
 });
 
 
+
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
   socket.on("join_chat", (chatId) => {
-    socket.join(chatId);
-    console.log(`Client ${socket.id} joined chat ${chatId}`);
+    socket.join(chatId.toString());
+    console.log(`Client ${socket.id} joined chat room ${chatId}`);
+  });
+
+  socket.on("leave_chat", (chatId) => {
+    socket.leave(chatId.toString());
+    console.log(`Client ${socket.id} left chat room ${chatId}`);
   });
 
   socket.on("send_message", async (data) => {
     try {
       const { chatId, text, userId, username } = data;
+
+      console.log(`Attempting to send message to chat ${chatId} from user ${username}`);
+
+      const memberCheck = await pool.query(
+        "SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2",
+        [chatId, userId]
+      );
+
+      if (memberCheck.rowCount === 0) {
+        console.log(`User ${userId} is not a member of chat ${chatId}`);
+        socket.emit("error", "You are not a member of this chat");
+        return;
+      }
 
       const result = await pool.query(
         "INSERT INTO messages (chat_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *",
@@ -242,8 +338,10 @@ io.on("connection", (socket) => {
         sender_name: username,
       };
 
-      io.to(chatId).emit("receive_message", message);
-      console.log(`Message sent to chat ${chatId}:`, text);
+      io.to(chatId.toString()).emit("receive_message", message);
+      
+      console.log(`Message sent to chat room ${chatId}: "${text}" by ${username}`);
+      
     } catch (error) {
       console.error("Error sending message:", error);
       socket.emit("error", "Failed to send message");
@@ -251,24 +349,25 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", (data) => {
-    socket.to(data.chatId).emit("user_typing", {
+    console.log(`${data.username} is typing in chat ${data.chatId}`);
+    socket.to(data.chatId.toString()).emit("user_typing", {
       username: data.username,
       chatId: data.chatId,
     });
   });
 
   socket.on("stop_typing", (data) => {
-    socket.to(data.chatId).emit("user_stop_typing", {
+    console.log(` ${data.username} stopped typing in chat ${data.chatId}`);
+    socket.to(data.chatId.toString()).emit("user_stop_typing", {
       username: data.username,
       chatId: data.chatId,
     });
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
+    console.log(" Client disconnected:", socket.id);
   });
 });
-
 
 async function startServer() {
   try {
