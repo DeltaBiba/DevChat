@@ -6,7 +6,7 @@
   --dark-blue: #45a29e;
 }
 
-/* Global chat container */
+/* Основной контейнер чата */
 .chatContainer {
   display: flex;
   height: 100vh;
@@ -42,7 +42,34 @@
   color: var(--gray);
 }
 
-/* Right panel - Chat window */
+.chatItem.active {
+  background-color: var(--dark-blue);
+}
+
+.chatItem.active h2 {
+  color: var(--blue);
+}
+
+.addChatButton {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 14px 0;
+  text-align: center;
+  font-weight: bold;
+  color: var(--black);
+  background-color: transparent;
+  border-top: 2px solid var(--dark-gray);
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.addChatButton:hover {
+  background-color: var(--dark-blue);
+  color: var(--blue);
+}
+
+/* Правая панель - Окно чата */
 .chatWindow {
   flex: 1;
   background: linear-gradient(
@@ -60,86 +87,36 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
-.chatWindow h2 {
-  margin-top: 0;
-}
-
-/* Message area */
-.messageArea {
-  flex: 1;
-  margin-top: 20px;
-  overflow-y: auto;
-  padding-right: 10px;
+/* Заголовок чата */
+.chatHeader {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Message bubble */
-.messageBubble {
-  background-color: var(--blue);
-  color: var(--black);
-  padding: 10px 15px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background-color: var(--dark-gray);
+  border-bottom: 1px solid var(--dark-blue);
   border-radius: 15px;
-  max-width: 60%;
-  word-wrap: break-word;
-  animation: fadeIn 0.3s ease-in-out;
+  box-sizing: border-box;
+  margin-bottom: 10px;
 }
 
-/* My message */
-.myMessage {
-  align-self: flex-end;
-  background-color: var(--dark-blue);
-  color: white;
+.chatTitle h2 {
+  margin: 0;
+  color: var(--gray);
+  font-size: 1.2rem;
 }
 
-/* Other's message */
-.theirMessage {
-  align-self: flex-start;
-}
-
-/* Input area */
-.inputArea {
-  display: flex;
-  margin-top: 20px;
-}
-
-.textInput {
-  flex: 1;
-  padding: 10px;
-  border: 2px solid var(--dark-blue);
+.titleInput {
+  font-size: 1.2rem;
+  padding: 6px 10px;
+  border: 1px solid var(--blue);
   border-radius: 10px;
-  margin-right: 10px;
-  font-size: 16px;
+  background-color: var(--dark-gray);
+  color: var(--gray);
+  outline: none;
 }
 
-.sendButton {
-  padding: 10px 20px;
-  background-color: var(--dark-blue);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.sendButton:hover {
-  background-color: var(--blue);
-  color: var(--black);
-}
-
-/* Fade-in animation for new messages */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.userBarWrapper {
+.userBar {
   display: flex;
   justify-content: flex-end;
   padding: 12px 24px;
@@ -161,70 +138,172 @@
   box-shadow: 0 0 5px rgba(102, 252, 241, 0.2);
 }
 
-
 .username:hover {
   background-color: rgba(102, 252, 241, 0.2);
   cursor: default;
 }
-.chatHeader {
+
+/* Область сообщений */
+.messageArea {
+  flex: 1;
+  margin-top: 20px;
+  overflow-y: auto;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-blue) transparent;
+}
+
+.messageArea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messageArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messageArea::-webkit-scrollbar-thumb {
+  background-color: var(--dark-blue);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+.messageArea::-webkit-scrollbar-thumb:hover {
+  background-color: var(--blue);
+}
+
+/* Сообщения */
+.messageBubble {
+  background-color: var(--blue);
+  color: var(--black);
+  padding: 12px 16px;
+  border-radius: 18px;
+  max-width: 70%;
+  word-wrap: break-word;
+  margin-bottom: 8px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.myMessage {
+  align-self: flex-end;
+  background-color: var(--dark-blue);
+  color: white;
+}
+
+.theirMessage {
+  align-self: flex-start;
+  background-color: var(--blue);
+  color: var(--black);
+}
+
+.messageContent {
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.messageInfo {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
-  background-color: var(--dark-gray);
-  border-bottom: 1px solid var(--dark-blue);
-  border-top-right-radius: 15px;
-  box-sizing: border-box;
-  margin-bottom: 10px;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.7;
 }
 
-.chatTitle h2 {
-  margin: 0;
-  color: var(--gray);
-  font-size: 1.2rem;
+.sender {
+  font-weight: 600;
 }
-.titleInput {
-  font-size: 1.2rem;
-  padding: 6px 10px;
-  border: 1px solid var(--blue);
+
+.timestamp {
+  font-size: 11px;
+}
+
+.myMessage .messageInfo {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.theirMessage .messageInfo {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Поле ввода */
+.inputArea {
+  display: flex;
+  margin-top: 20px;
+}
+
+.textInput {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid var(--dark-blue);
   border-radius: 10px;
-  background-color: var(--dark-gray);
+  margin-right: 10px;
+  font-size: 16px;
+  background-color: var(--black);
   color: var(--gray);
-  outline: none;
-}
-.addChatButton {
-  all: unset;
-  display: block;
-  width: 100%;
-  padding: 14px 0;
-  text-align: center;
-  font-weight: bold;
-  color: var(--black); /* ← THIS LINE CHANGED */
-  background-color: transparent;
-  border-top: 2px solid var(--dark-gray);
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.addChatButton:hover {
+.textInput:focus {
+  border-color: var(--blue);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 252, 241, 0.2);
+}
+
+.sendButton {
+  padding: 10px 20px;
   background-color: var(--dark-blue);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.sendButton:hover {
+  background-color: var(--blue);
+  color: var(--black);
+}
+
+.sendButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--gray);
+}
+
+/* Состояния загрузки и пустых данных */
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray);
+  font-style: italic;
+}
+
+.noChat, .noMessages {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  color: var(--gray);
+  opacity: 0.7;
+}
+
+.noChat h3 {
+  margin-bottom: 10px;
   color: var(--blue);
 }
 
-.chatList {
-  width: 200px;
-  background-color: var(--blue);
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+/* Анимация появления сообщений */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-
-.chatItems {
-  flex: 1;
-  overflow-y: auto;
-}
-
