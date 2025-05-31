@@ -4,6 +4,7 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.isConnected = false;
+    this.currentChatId = null;
   }
 
   connect() {
@@ -38,6 +39,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.currentChatId = null;
     }
   }
 

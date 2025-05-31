@@ -27,44 +27,50 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (username, password) => {
-    try {
-      const response = await authAPI.login(username, password);
+  try {
+    const result = await authAPI.login(username, password);
+    
+    if (result.success) {
+      localStorage.setItem("token", result.data.token);
+      localStorage.setItem("user", JSON.stringify(result.data.user));
       
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-      
-      setToken(response.token);
-      setUser(response.user);
+      setToken(result.data.token);
+      setUser(result.data.user);
       
       return { success: true };
-    } catch (error) {
-      console.error("Login error:", error);
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || "Login failed"
-      };
+    } else {
+      return { success: false, error: result.error };
     }
-  };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message || "Login failed"
+    };
+  }
+};
 
-  const register = async (username, password) => {
-    try {
-      const response = await authAPI.register(username, password);
+const register = async (username, password) => {
+  try {
+    const result = await authAPI.register(username, password);
+    
+    if (result.success) {
+      localStorage.setItem("token", result.data.token);
+      localStorage.setItem("user", JSON.stringify(result.data.user));
       
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-      
-      setToken(response.token);
-      setUser(response.user);
+      setToken(result.data.token);
+      setUser(result.data.user);
       
       return { success: true };
-    } catch (error) {
-      console.error("Register error:", error);
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || "Registration failed"
-      };
+    } else {
+      return { success: false, error: result.error };
     }
-  };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message || "Registration failed"
+    };
+  }
+};
 
   const logout = () => {
     localStorage.removeItem("token");

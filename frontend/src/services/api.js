@@ -27,59 +27,97 @@ api.interceptors.response.use(
     }
     return Promise.reject(error);
   }
-)
+);
 
+const handleApiCall = async (apiFunction) => {
+  try {
+    const response = await apiFunction();
+    return {
+      success: true,
+      data: response
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message || "Something went wrong"
+    };
+  }
+};
 
-
-// Authentication API functions
 export const authAPI = {
   login: async (username, password) => {
-    const response = await api.post("/login", {username, password});
-    return response.data
+    return handleApiCall(async () => {
+      const response = await api.post("/login", { username, password });
+      return response.data;
+    });
   },
   
   register: async (username, password) => {
-    const response = await api.post("/register", { username, password });
-    return response.data;
+    return handleApiCall(async () => {
+      const response = await api.post("/register", { username, password });
+      return response.data;
+    });
   }
-}
+};
 
-
-// Users API functions
 export const userAPI = {
   getUsers: async () => {
-    const response = await api.get("/users");
-    return response.data;
+    return handleApiCall(async () => {
+      const response = await api.get("/users");
+      return response.data;
+    });
   },
   
   searchUser: async (username) => {
-    const response = await api.get(`/users/search/${username}`);
-    return response.data;
+    return handleApiCall(async () => {
+      const response = await api.get(`/users/search/${username}`);
+      return response.data;
+    });
   }
-}
+};
 
-
-// Chats API functions
 export const chatAPI = {
   getChats: async () => {
-    const response = await api.get("/chats");
-    return response.data;
+    return handleApiCall(async () => {
+      const response = await api.get("/chats");
+      return response.data;
+    });
   },
   
   createChatByUsernames: async (name, usernames = []) => {
-    const response = await api.post("/chats/by-usernames", {
-      name, usernames, is_group: usernames.length > 0
+    return handleApiCall(async () => {
+      const response = await api.post("/chats/by-usernames", {
+        name,
+        usernames,
+        is_group: usernames.length > 0
+      });
+      return response.data;
     });
-    return response.data;
+  },
+  
+  createChatWithUser: async (username) => {
+    return handleApiCall(async () => {
+      const response = await api.post("/chats/with-user", { username });
+      return response.data;
+    });
   },
   
   getMessages: async (chatId) => {
-    const response = await api.get(`/chats/${chatId}/messages`);
-    return response.data;
+    return handleApiCall(async () => {
+      const response = await api.get(`/chats/${chatId}/messages`);
+      return response.data;
+    });
+  },
+  
+  sendMessage: async (chatId, text) => {
+    return handleApiCall(async () => {
+      const response = await api.post(`/chats/${chatId}/messages`, { text });
+      return response.data;
+    });
   }
-}
+};
 
-export const loginUser = authAPI.login;
-export const registerUser = authAPI.register;
+export const loginUser = (username, password) => authAPI.login(username, password);
+export const registerUser = (username, password) => authAPI.register(username, password);
 
 export default api;
