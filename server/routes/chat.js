@@ -136,4 +136,29 @@ router.post("/:chatId/messages", authenticateToken, async (req, res) => {
   }
 });
 
+router.delete("/:chatId", authenticateToken, async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const userId = req.user.user_id;
+
+    const memberCheck = await pool.query(
+      `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
+      [chatId, userId]
+    );
+
+    if (memberCheck.rowCount === 0) {
+      return res
+        .status(403)
+        .json({ error: "User is not a member of this chat" });
+    }
+
+    await pool.query(`DELETE FROM chats WHERE chat_id = $1`, [chatId]);
+
+    res.status(200).json({ message: "Chat deleted" });
+  } catch (error) {
+    console.error("Error deleting chat:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
