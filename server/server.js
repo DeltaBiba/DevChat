@@ -16,11 +16,21 @@ const socketIo = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
+// Определяем базовый URL в зависимости от окружения
+const getBaseUrl = () => {
+  if (process.env.NODE_ENV === "production") {
+    return `https://${
+      process.env.HEROKU_APP_NAME || "devchat-627b61eb11e2"
+    }.herokuapp.com`;
+  }
+  return "http://localhost:5173";
+};
+
 const io = socketIo(server, {
   cors: {
     origin:
       process.env.NODE_ENV === "production"
-        ? [process.env.FRONTEND_URL || "https://devchat-627b61eb11e2.herokuapp.com"]
+        ? [getBaseUrl(), "https://devchat-627b61eb11e2.herokuapp.com"]
         : ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true,
@@ -33,7 +43,7 @@ app.use(express.json());
 const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
-      ? [process.env.FRONTEND_URL || "https://devchat.herokuapp.com"]
+      ? [getBaseUrl(), "https://devchat-627b61eb11e2.herokuapp.com"]
       : ["http://localhost:5173", "http://localhost:3000"],
   credentials: true,
   optionsSuccessStatus: 200,
@@ -43,8 +53,19 @@ app.use(cors(corsOptions));
 
 // Serve static files from React build
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  const frontendPath = path.join(__dirname, "../frontend/dist");
+  console.log("Serving static files from:", frontendPath);
+  app.use(express.static(frontendPath));
 }
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+  });
+});
 
 // API routes
 app.post("/api/login", async (req, res) => {
@@ -323,7 +344,9 @@ app.get("/api/status", (req, res) => {
 // Serve React app for all other routes in production
 if (process.env.NODE_ENV === "production") {
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+    const indexPath = path.join(__dirname, "../frontend/dist/index.html");
+    console.log("Serving index.html from:", indexPath);
+    res.sendFile(indexPath);
   });
 }
 
@@ -404,14 +427,24 @@ io.on("connection", (socket) => {
 
 async function startServer() {
   try {
+    console.log("Starting server...");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("PORT:", process.env.PORT || 3000);
+
+    if (!process.env.SECRET_KEY) {
+      throw new Error("SECRET_KEY environment variable is required");
+    }
+
     await initializeDatabase();
+    console.log("Database initialized successfully");
 
     const PORT = process.env.PORT || 3000;
-    server.listen(PORT, () => {
+    server.listen(PORT, "0.0.0.0", () => {
       console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
     });
   } catch (error) {
-    console.error(error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 }
