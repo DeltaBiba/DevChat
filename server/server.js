@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const bcrypt = require("bcrypt");
 const { initializeDatabase } = require("./dbinit");
-const chatRoutes = require("./routes/chat");
 const { authenticateToken } = require("./middleware/auth");
 const path = require("path");
 require("dotenv").config();
@@ -67,7 +66,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// API routes
+// AUTH ROUTES
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -154,6 +153,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
+// USER ROUTES
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     const currentUserId = req.user.user_id;
@@ -170,29 +170,22 @@ app.get("/api/users", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/api/users/search/:username", authenticateToken, async (req, res) => {
+// CHAT ROUTES
+app.get("/api/chats", authenticateToken, async (req, res) => {
   try {
-    const { username } = req.params;
+    const userId = req.user.user_id;
 
-    if (!username || username.length < 2) {
-      return res
-        .status(400)
-        .json({ error: "Username must be at least 2 characters" });
-    }
+    const result = await pool.query(
+      `SELECT c.chat_id, c.name, c.is_group
+            FROM chats c
+            JOIN chat_members cm ON c.chat_id = cm.chat_id
+            WHERE cm.user_id = $1`,
+      [userId]
+    );
 
-    const user = await User.findByUsername(username);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    if (user.user_id === req.user.user_id) {
-      return res.status(400).json({ error: "Cannot add yourself" });
-    }
-
-    res.status(200).json(user);
+    res.status(200).json(result.rows);
   } catch (error) {
-    console.error("Error searching user:", error);
+    console.error("Error fetching chats:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -335,7 +328,7 @@ app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
   }
 });
 
-// Сообщения для чата
+// MESSAGE ROUTES
 app.get("/api/chat-messages/:chatId", authenticateToken, async (req, res) => {
   try {
     const chatId = parseInt(req.params.chatId);
@@ -418,8 +411,35 @@ app.post("/api/chat-messages/:chatId", authenticateToken, async (req, res) => {
   }
 });
 
-// Используем упрощенные маршруты чатов
-app.use("/api/chats", chatRoutes);
+// DELETE CHAT
+app.delete("/api/chats/:chatId", authenticateToken, async (req, res) => {
+  try {
+    const chatId = parseInt(req.params.chatId);
+    const userId = req.user.user_id;
+
+    if (!chatId || isNaN(chatId)) {
+      return res.status(400).json({ error: "Invalid chat ID" });
+    }
+
+    const memberCheck = await pool.query(
+      `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
+      [chatId, userId]
+    );
+
+    if (memberCheck.rowCount === 0) {
+      return res
+        .status(403)
+        .json({ error: "User is not a member of this chat" });
+    }
+
+    await pool.query(`DELETE FROM chats WHERE chat_id = $1`, [chatId]);
+
+    res.status(200).json({ message: "Chat deleted" });
+  } catch (error) {
+    console.error("Error deleting chat:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 app.get("/api/status", (req, res) => {
   res.status(200).json({ message: "Server is running" });
