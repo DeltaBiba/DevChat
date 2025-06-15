@@ -62,20 +62,22 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-// Исправленные маршруты без регулярных выражений
-router.get("/:chatId/messages", authenticateToken, async (req, res) => {
+// Используем более простые маршруты без сложных параметров
+router.get("/messages/:chatId", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const userId = req.user.user_id;
 
     // Проверяем, что chatId - это число
-    if (!/^\d+$/.test(chatId)) {
+    if (!chatId || isNaN(parseInt(chatId))) {
       return res.status(400).json({ error: "Invalid chat ID" });
     }
 
+    const parsedChatId = parseInt(chatId);
+
     const memberCheck = await pool.query(
       `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
-      [chatId, userId]
+      [parsedChatId, userId]
     );
 
     if (memberCheck.rowCount === 0) {
@@ -91,7 +93,7 @@ router.get("/:chatId/messages", authenticateToken, async (req, res) => {
              WHERE m.chat_id = $1
              ORDER BY m.sent_at ASC
             `,
-      [chatId]
+      [parsedChatId]
     );
 
     res.status(200).json(messages.rows);
@@ -101,20 +103,22 @@ router.get("/:chatId/messages", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/:chatId/messages", authenticateToken, async (req, res) => {
+router.post("/messages/:chatId", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const { text } = req.body;
     const userId = req.user.user_id;
 
     // Проверяем, что chatId - это число
-    if (!/^\d+$/.test(chatId)) {
+    if (!chatId || isNaN(parseInt(chatId))) {
       return res.status(400).json({ error: "Invalid chat ID" });
     }
 
+    const parsedChatId = parseInt(chatId);
+
     const memberCheck = await pool.query(
       `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
-      [chatId, userId]
+      [parsedChatId, userId]
     );
 
     if (memberCheck.rowCount === 0) {
@@ -127,7 +131,7 @@ router.post("/:chatId/messages", authenticateToken, async (req, res) => {
       `INSERT INTO messages (chat_id, sender_id, text)
              VALUES ($1, $2, $3)
              RETURNING *`,
-      [chatId, userId, text]
+      [parsedChatId, userId, text]
     );
 
     const userResult = await pool.query(
@@ -153,13 +157,15 @@ router.delete("/:chatId", authenticateToken, async (req, res) => {
     const userId = req.user.user_id;
 
     // Проверяем, что chatId - это число
-    if (!/^\d+$/.test(chatId)) {
+    if (!chatId || isNaN(parseInt(chatId))) {
       return res.status(400).json({ error: "Invalid chat ID" });
     }
 
+    const parsedChatId = parseInt(chatId);
+
     const memberCheck = await pool.query(
       `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
-      [chatId, userId]
+      [parsedChatId, userId]
     );
 
     if (memberCheck.rowCount === 0) {
@@ -168,7 +174,7 @@ router.delete("/:chatId", authenticateToken, async (req, res) => {
         .json({ error: "User is not a member of this chat" });
     }
 
-    await pool.query(`DELETE FROM chats WHERE chat_id = $1`, [chatId]);
+    await pool.query(`DELETE FROM chats WHERE chat_id = $1`, [parsedChatId]);
 
     res.status(200).json({ message: "Chat deleted" });
   } catch (error) {

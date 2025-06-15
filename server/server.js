@@ -335,6 +335,7 @@ app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
   }
 });
 
+// Используем маршруты чатов с правильным базовым путем
 app.use("/api/chats", chatRoutes);
 
 app.get("/api/status", (req, res) => {

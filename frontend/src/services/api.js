@@ -107,14 +107,14 @@ export const chatAPI = {
 
   getMessages: async (chatId) => {
     return handleApiCall(async () => {
-      const response = await api.get(`/chats/${chatId}/messages`);
+      const response = await api.get(`/chats/messages/${chatId}`);
       return response.data;
     });
   },
 
   sendMessage: async (chatId, text) => {
     return handleApiCall(async () => {
-      const response = await api.post(`/chats/${chatId}/messages`, { text });
+      const response = await api.post(`/chats/messages/${chatId}`, { text });
       return response.data;
     });
   },
