@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const { initializeDatabase } = require("./dbinit");
 const chatRoutes = require("./routes/chat");
 const { authenticateToken } = require("./middleware/auth");
+const path = require("path");
 require("dotenv").config();
 
 const http = require("http");
@@ -17,15 +18,33 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.NODE_ENV === 'production' 
+      ? [process.env.FRONTEND_URL || "https://your-app-name.herokuapp.com"]
+      : ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST"],
+    credentials: true
   },
 });
 
 app.use(express.json());
-app.use(cors());
 
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? [process.env.FRONTEND_URL || "https://your-app-name.herokuapp.com"]
+    : ["http://localhost:5173", "http://localhost:3000"],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
 
+app.use(cors(corsOptions));
+
+// Serve static files from React build
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+}
+
+// API routes
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -112,7 +131,6 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     const currentUserId = req.user.user_id;
@@ -153,7 +171,6 @@ app.get("/api/users/search/:username", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 app.post("/api/chats/by-usernames", authenticateToken, async (req, res) => {
   const client = await pool.connect();
@@ -211,7 +228,6 @@ app.post("/api/chats/by-usernames", authenticateToken, async (req, res) => {
     client.release();
   }
 });
-
 
 app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
   const client = await pool.connect();
@@ -289,15 +305,20 @@ app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
   }
 });
 
-
 app.use("/api/chats", chatRoutes);
 
 app.get("/api/status", (req, res) => {
   res.status(200).json({ message: "Server is running" });
 });
 
+// Serve React app for all other routes in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  });
+}
 
-
+// Socket.IO
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
@@ -357,7 +378,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("stop_typing", (data) => {
-    console.log(` ${data.username} stopped typing in chat ${data.chatId}`);
+    console.log(`${data.username} stopped typing in chat ${data.chatId}`);
     socket.to(data.chatId.toString()).emit("user_stop_typing", {
       username: data.username,
       chatId: data.chatId,
@@ -365,7 +386,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log(" Client disconnected:", socket.id);
+    console.log("Client disconnected:", socket.id);
   });
 });
 

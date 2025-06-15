@@ -1,5 +1,28 @@
 {
-  "dependencies": {
-    "axios": "^1.9.0"
-  }
+  "name": "devchat",
+  "version": "1.0.0",
+  "description": "DevChat - Real-time chat application",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "node server/server.js",
+    "heroku-postbuild": "cd frontend && npm install && npm run build"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  },
+  "keywords": [
+    "chat",
+    "realtime",
+    "websocket",
+    "react",
+    "nodejs"
+  ],
+  "authors": [
+    "Illia Buliekha",
+    "Danylo Bibaiev"
+  ],
+  "license": "MIT"
 }

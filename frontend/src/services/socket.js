@@ -12,18 +12,24 @@ class SocketService {
       return this.socket;
     }
 
-    this.socket = io('http://localhost:3000', {
+    // Определяем URL для подключения в зависимости от окружения
+    const socketURL = import.meta.env.PROD 
+      ? window.location.origin  // В production используем текущий домен
+      : 'http://localhost:3000';
+
+    this.socket = io(socketURL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
+      withCredentials: true,
     });
 
     this.socket.on('connect', () => {
-      console.log(' Connected to server:', this.socket.id);
+      console.log('Connected to server:', this.socket.id);
       this.isConnected = true;
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log(' Disconnected from server:', reason);
+      console.log('Disconnected from server:', reason);
       this.isConnected = false;
     });
 
@@ -46,7 +52,7 @@ class SocketService {
   joinChat(chatId) {
     if (this.socket && this.isConnected) {
       this.socket.emit('join_chat', chatId.toString());
-      console.log(`📝 Joined chat room: ${chatId}`);
+      console.log(`Joined chat room: ${chatId}`);
     }
   }
 
