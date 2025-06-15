@@ -18,7 +18,8 @@
 
 /* Левая панель - Список чатов */
 .chatList {
-  width: 200px;
+  width: 250px;
+  min-width: 250px;
   background-color: var(--blue);
   border-radius: 20px;
   display: flex;
@@ -60,29 +61,51 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 60px;
 }
 
-.chatItem h2 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--black);
+.chatContent {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0; /* Позволяет flex элементу сжиматься */
+}
+
+.chatContent h2 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.groupIcon {
+  font-size: 12px;
+  padding: 2px 6px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  color: var(--black);
+  font-weight: 600;
+  align-self: flex-start;
 }
 
 .chatItem:hover {
   background-color: var(--dark-blue);
 }
 
-.chatItem:hover h2 {
+.chatItem:hover .chatContent h2 {
   color: var(--gray);
+}
+
+.chatItem.active .chatContent h2 {
+  color: var(--blue);
 }
 
 .chatItem.active {
   background-color: var(--dark-blue);
-}
-
-.chatItem.active h2 {
-  color: var(--blue);
 }
 
 .deleteChatIcon {
@@ -96,18 +119,28 @@
   opacity: 1;
 }
 
+/* Область действий с чатами */
+.chatActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-top: 2px solid var(--dark-gray);
+}
+
 .addChatButton {
   all: unset;
   display: block;
   width: 100%;
-  padding: 14px 0;
+  padding: 12px 0;
   text-align: center;
   font-weight: bold;
   color: var(--black);
   background-color: transparent;
-  border-top: 2px solid var(--dark-gray);
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .addChatButton:hover {
@@ -189,6 +222,27 @@
   cursor: default;
 }
 
+/* Сообщения об ошибках */
+.errorMessage {
+  background-color: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.errorMessage button {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
 /* Область сообщений */
 .messageArea {
   flex: 1;
@@ -261,7 +315,6 @@
   margin-bottom: 4px;
   line-height: 1.4;
 }
-
 
 .messageInfo {
   display: flex;
@@ -356,6 +409,210 @@
   color: var(--blue);
 }
 
+/* Модальное окно */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: var(--dark-gray);
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--blue);
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: var(--blue);
+  font-size: 1.5rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.closeButton:hover {
+  background-color: var(--blue);
+  color: var(--black);
+}
+
+.modalContent {
+  padding: 20px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.modalInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--dark-blue);
+  border-radius: 8px;
+  background-color: var(--black);
+  color: var(--gray);
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.modalInput:focus {
+  border-color: var(--blue);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 252, 241, 0.2);
+}
+
+.addUserRow {
+  display: flex;
+  gap: 10px;
+}
+
+.addUserRow .modalInput {
+  flex: 1;
+}
+
+.addButton {
+  padding: 12px 20px;
+  background-color: var(--blue);
+  color: var(--black);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.addButton:hover {
+  background-color: var(--dark-blue);
+  color: var(--gray);
+}
+
+.usersList {
+  margin-top: 15px;
+}
+
+.usersList label {
+  margin-bottom: 10px;
+}
+
+.userItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--black);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.userItem span {
+  color: var(--gray);
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.removeButton:hover {
+  background-color: rgba(255, 107, 107, 0.2);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding: 20px;
+  border-top: 1px solid var(--blue);
+}
+
+.cancelButton {
+  padding: 12px 24px;
+  background-color: transparent;
+  color: var(--gray);
+  border: 1px solid var(--gray);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+  background-color: var(--gray);
+  color: var(--black);
+}
+
+.createButton {
+  padding: 12px 24px;
+  background-color: var(--blue);
+  color: var(--black);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.createButton:hover:not(:disabled) {
+  background-color: var(--dark-blue);
+  color: var(--gray);
+}
+
+.createButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--gray);
+}
+
 /* Анимация появления сообщений */
 @keyframes fadeIn {
   from {
@@ -365,5 +622,35 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .chatContainer {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .chatList {
+    width: 180px;
+    min-width: 180px;
+  }
+  
+  .chatContent h2 {
+    font-size: 14px;
+  }
+  
+  .modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .modalActions {
+    flex-direction: column;
+  }
+  
+  .addUserRow {
+    flex-direction: column;
   }
 }

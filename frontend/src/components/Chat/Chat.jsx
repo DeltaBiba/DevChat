@@ -19,6 +19,14 @@ export const Chat = () => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [chatTitleInput, setChatTitleInput] = useState("");
   
+  // Состояния для модальных окон
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showPrivateModal, setShowPrivateModal] = useState(false);
+  const [groupChatName, setGroupChatName] = useState("");
+  const [groupUsers, setGroupUsers] = useState([]);
+  const [userToAdd, setUserToAdd] = useState("");
+  const [privateUsername, setPrivateUsername] = useState("");
+  
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -94,19 +102,90 @@ export const Chat = () => {
   };
 
   const handleCreateChatWithUser = async () => {
-    const username = prompt("Enter username to chat with:");
-    if (!username || !username.trim()) return;
+    if (!privateUsername.trim()) {
+      setError("Username is required");
+      return;
+    }
     
     setError("");
     
-    const chatName = `Chat with ${username}`;
-    const result = await chatAPI.createChatByUsernames(chatName, [username.trim()]);
+    const chatName = `Chat with ${privateUsername}`;
+    const result = await chatAPI.createChatByUsernames(chatName, [privateUsername.trim()]);
     
     if (result.success) {
       setChats(prev => [...prev, result.data]);
       setSelectedChat(result.data);
+      handleClosePrivateModal();
     } else {
-      setError(`Failed to create chat with ${username}: ${result.error}`);
+      setError(`Failed to create chat with ${privateUsername}: ${result.error}`);
+    }
+  };
+
+  // Функции для работы с приватными чатами
+  const handleShowPrivateModal = () => {
+    setShowPrivateModal(true);
+    setPrivateUsername("");
+  };
+
+  const handleClosePrivateModal = () => {
+    setShowPrivateModal(false);
+    setPrivateUsername("");
+  };
+
+  // Функции для работы с групповыми чатами
+  const handleShowGroupModal = () => {
+    setShowGroupModal(true);
+    setGroupChatName("");
+    setGroupUsers([]);
+    setUserToAdd("");
+  };
+
+  const handleCloseGroupModal = () => {
+    setShowGroupModal(false);
+    setGroupChatName("");
+    setGroupUsers([]);
+    setUserToAdd("");
+  };
+
+  const handleAddUserToGroup = () => {
+    if (!userToAdd.trim()) return;
+    
+    const username = userToAdd.trim();
+    if (!groupUsers.includes(username)) {
+      setGroupUsers(prev => [...prev, username]);
+    }
+    setUserToAdd("");
+  };
+
+  const handleRemoveUserFromGroup = (username) => {
+    setGroupUsers(prev => prev.filter(user => user !== username));
+  };
+
+  const handleCreateGroupChat = async () => {
+    if (!groupChatName.trim()) {
+      setError("Group chat name is required");
+      return;
+    }
+    
+    if (groupUsers.length === 0) {
+      setError("At least one user must be added to the group");
+      return;
+    }
+    
+    setError("");
+    
+    const result = await chatAPI.createChatByUsernames(
+      groupChatName.trim(),
+      groupUsers,
+      true // is_group = true
+    );
+    
+    if (result.success) {
+      setChats(prev => [...prev, result.data]);
+      setSelectedChat(result.data);
+      handleCloseGroupModal();
+    } else {
+      setError(`Failed to create group chat: ${result.error}`);
     }
   };
 
@@ -208,8 +287,10 @@ export const Chat = () => {
                 }`}
                 onClick={() => handleChatSelect(chat)}
               >
-                <h2>{chat.name}</h2>
-                {chat.is_group && <span className={styles.groupIcon}>Group</span>}
+                <div className={styles.chatContent}>
+                  <h2>{chat.name}</h2>
+                  {chat.is_group && <span className={styles.groupIcon}>Group</span>}
+                </div>
                 <img
                   src="/trash.svg"
                   alt="Delete"
@@ -221,9 +302,14 @@ export const Chat = () => {
           )}
         </div>
         
-        <button className={styles.addChatButton} onClick={handleCreateChatWithUser}>
-          Chat with User
-        </button>
+        <div className={styles.chatActions}>
+          <button className={styles.addChatButton} onClick={handleShowPrivateModal}>
+            Private Chat
+          </button>
+          <button className={styles.addChatButton} onClick={handleShowGroupModal}>
+            Group Chat
+          </button>
+        </div>
       </div>
 
       <div className={styles.chatWindow}>
@@ -318,6 +404,130 @@ export const Chat = () => {
           </div>
         )}
       </div>
+
+      {/* Модальное окно для создания приватного чата */}
+      {showPrivateModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>Create Private Chat</h3>
+              <button className={styles.closeButton} onClick={handleClosePrivateModal}>
+                ×
+              </button>
+            </div>
+            
+            <div className={styles.modalContent}>
+              <div className={styles.formGroup}>
+                <label>Username:</label>
+                <input
+                  type="text"
+                  value={privateUsername}
+                  onChange={(e) => setPrivateUsername(e.target.value)}
+                  placeholder="Enter username..."
+                  className={styles.modalInput}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateChatWithUser()}
+                />
+              </div>
+            </div>
+            
+            <div className={styles.modalActions}>
+              <button 
+                onClick={handleClosePrivateModal}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCreateChatWithUser}
+                className={styles.createButton}
+                disabled={!privateUsername.trim()}
+              >
+                Create Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно для создания группового чата */}
+      {showGroupModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>Create Group Chat</h3>
+              <button className={styles.closeButton} onClick={handleCloseGroupModal}>
+                ×
+              </button>
+            </div>
+            
+            <div className={styles.modalContent}>
+              <div className={styles.formGroup}>
+                <label>Group Name:</label>
+                <input
+                  type="text"
+                  value={groupChatName}
+                  onChange={(e) => setGroupChatName(e.target.value)}
+                  placeholder="Enter group name..."
+                  className={styles.modalInput}
+                />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label>Add Users:</label>
+                <div className={styles.addUserRow}>
+                  <input
+                    type="text"
+                    value={userToAdd}
+                    onChange={(e) => setUserToAdd(e.target.value)}
+                    placeholder="Enter username..."
+                    className={styles.modalInput}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddUserToGroup()}
+                  />
+                  <button 
+                    onClick={handleAddUserToGroup}
+                    className={styles.addButton}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+              
+              {groupUsers.length > 0 && (
+                <div className={styles.usersList}>
+                  <label>Users in group:</label>
+                  {groupUsers.map((username, index) => (
+                    <div key={index} className={styles.userItem}>
+                      <span>{username}</span>
+                      <button 
+                        onClick={() => handleRemoveUserFromGroup(username)}
+                        className={styles.removeButton}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className={styles.modalActions}>
+              <button 
+                onClick={handleCloseGroupModal}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCreateGroupChat}
+                className={styles.createButton}
+                disabled={!groupChatName.trim() || groupUsers.length === 0}
+              >
+                Create Group
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
