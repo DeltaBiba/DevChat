@@ -20,7 +20,7 @@ const io = socketIo(server, {
   cors: {
     origin:
       process.env.NODE_ENV === "production"
-        ? [process.env.FRONTEND_URL || "devchat-627b61eb11e2.herokuapp.com"]
+        ? [process.env.FRONTEND_URL || "https://devchat-627b61eb11e2.herokuapp.com"]
         : ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true,
