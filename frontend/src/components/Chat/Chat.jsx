@@ -171,6 +171,22 @@ export const Chat = () => {
     setError("");
   };
 
+  const handleDeleteChat = async (e, chatId) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this chat?")) return;
+
+    const result = await chatAPI.deleteChat(chatId);
+    if (result.success) {
+      setChats(prev => prev.filter(c => c.chat_id !== chatId));
+      if (selectedChat?.chat_id === chatId) {
+        setSelectedChat(null);
+        setMessages([]);
+      }
+    } else {
+      setError(`Failed to delete chat: ${result.error}`);
+    }
+  };
+
   if (!user) {
     return <div className={styles.chatContainer}>Loading...</div>;
   }
@@ -194,6 +210,12 @@ export const Chat = () => {
               >
                 <h2>{chat.name}</h2>
                 {chat.is_group && <span className={styles.groupIcon}>Group</span>}
+                <img
+                  src="/trash.svg"
+                  alt="Delete"
+                  className={styles.deleteChatIcon}
+                  onClick={(e) => handleDeleteChat(e, chat.chat_id)}
+                />
               </div>
             ))
           )}
