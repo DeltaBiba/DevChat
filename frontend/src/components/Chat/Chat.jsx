@@ -256,9 +256,12 @@ export const Chat = () => {
                   msg.sender_id === user?.id ? styles.myMessage : styles.theirMessage
                 }`}
               >
+                <div className={styles.messageHeader}>
+                  <img src="/default-user.svg" alt="avatar" className={styles.avatar} />
+                  <span className={styles.sender}>{msg.sender_name}</span>
+                </div>
                 <div className={styles.messageContent}>{msg.text}</div>
                 <div className={styles.messageInfo}>
-                  <span className={styles.sender}>{msg.sender_name}</span>
                   <span className={styles.timestamp}>
                     {new Date(msg.sent_at).toLocaleTimeString([], {
                       hour: '2-digit',
