@@ -32,7 +32,7 @@ router.post("/", authenticateToken, async (req, res) => {
     const { name, is_group, user_ids } = req.body;
     const creatorId = req.user.user_id;
 
-    const allUserIds = [...new Set([creatorId, ...user_ids])];
+    const allUserIds = [...new Set([creatorId, ...(user_ids || [])])];
 
     const chatResult = await client.query(
       `INSERT INTO chats (name, is_group)
@@ -62,7 +62,8 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-router.get("/:chatId/messages", authenticateToken, async (req, res) => {
+// Fixed route parameter syntax
+router.get("/:chatId(\\d+)/messages", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const userId = req.user.user_id;
@@ -95,7 +96,7 @@ router.get("/:chatId/messages", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/:chatId/messages", authenticateToken, async (req, res) => {
+router.post("/:chatId(\\d+)/messages", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const { text } = req.body;
@@ -136,7 +137,7 @@ router.post("/:chatId/messages", authenticateToken, async (req, res) => {
   }
 });
 
-router.delete("/:chatId", authenticateToken, async (req, res) => {
+router.delete("/:chatId(\\d+)", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const userId = req.user.user_id;
