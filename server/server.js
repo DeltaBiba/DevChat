@@ -18,11 +18,12 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? [process.env.FRONTEND_URL || "https://your-app-name.herokuapp.com"]
-      : ["http://localhost:5173", "http://localhost:3000"],
+    origin:
+      process.env.NODE_ENV === "production"
+        ? [process.env.FRONTEND_URL || "https://your-app-name.herokuapp.com"]
+        : ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
   },
 });
 
@@ -30,18 +31,19 @@ app.use(express.json());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL || "https://your-app-name.herokuapp.com"]
-    : ["http://localhost:5173", "http://localhost:3000"],
+  origin:
+    process.env.NODE_ENV === "production"
+      ? [process.env.FRONTEND_URL || "https://devchat.herokuapp.com"]
+      : ["http://localhost:5173", "http://localhost:3000"],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
 
 // Serve static files from React build
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 }
 
 // API routes
@@ -134,12 +136,12 @@ app.post("/api/register", async (req, res) => {
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     const currentUserId = req.user.user_id;
-    
+
     const result = await pool.query(
       "SELECT user_id, username FROM users WHERE user_id != $1 ORDER BY username",
       [currentUserId]
     );
-    
+
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -150,21 +152,23 @@ app.get("/api/users", authenticateToken, async (req, res) => {
 app.get("/api/users/search/:username", authenticateToken, async (req, res) => {
   try {
     const { username } = req.params;
-    
+
     if (!username || username.length < 2) {
-      return res.status(400).json({ error: "Username must be at least 2 characters" });
+      return res
+        .status(400)
+        .json({ error: "Username must be at least 2 characters" });
     }
-    
+
     const user = await User.findByUsername(username);
-    
+
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    
+
     if (user.user_id === req.user.user_id) {
       return res.status(400).json({ error: "Cannot add yourself" });
     }
-    
+
     res.status(200).json(user);
   } catch (error) {
     console.error("Error searching user:", error);
@@ -174,17 +178,17 @@ app.get("/api/users/search/:username", authenticateToken, async (req, res) => {
 
 app.post("/api/chats/by-usernames", authenticateToken, async (req, res) => {
   const client = await pool.connect();
-  
+
   try {
     await client.query("BEGIN");
-    
+
     const { name, usernames = [], is_group } = req.body;
     const creatorId = req.user.user_id;
-    
+
     if (!name) {
       return res.status(400).json({ error: "Chat name is required" });
     }
-    
+
     const userIds = [];
     for (const username of usernames) {
       const user = await User.findByUsername(username);
@@ -195,31 +199,30 @@ app.post("/api/chats/by-usernames", authenticateToken, async (req, res) => {
         return res.status(404).json({ error: `User '${username}' not found` });
       }
     }
-    
+
     const allUserIds = [...new Set([creatorId, ...userIds])];
-    
+
     const chatResult = await client.query(
       `INSERT INTO chats (name, is_group) VALUES ($1, $2) RETURNING *`,
       [name, is_group || userIds.length > 0]
     );
-    
+
     const chatId = chatResult.rows[0].chat_id;
-    
+
     for (const userId of allUserIds) {
       await client.query(
         `INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2)`,
         [chatId, userId]
       );
     }
-    
+
     await client.query("COMMIT");
-    
+
     res.status(201).json({
       ...chatResult.rows[0],
       members_added: allUserIds.length,
-      message: "Chat created successfully"
+      message: "Chat created successfully",
     });
-    
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error creating chat by usernames:", error);
@@ -231,29 +234,32 @@ app.post("/api/chats/by-usernames", authenticateToken, async (req, res) => {
 
 app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
   const client = await pool.connect();
-  
+
   try {
     await client.query("BEGIN");
-    
+
     const { username } = req.body;
     const creatorId = req.user.user_id;
-    
+
     if (!username) {
       return res.status(400).json({ error: "Username is required" });
     }
-    
+
     const targetUser = await User.findByUsername(username);
     if (!targetUser) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: `User '${username}' not found` });
     }
-    
+
     if (targetUser.user_id === creatorId) {
       await client.query("ROLLBACK");
-      return res.status(400).json({ error: "Cannot create chat with yourself" });
+      return res
+        .status(400)
+        .json({ error: "Cannot create chat with yourself" });
     }
-    
-    const existingChat = await client.query(`
+
+    const existingChat = await client.query(
+      `
       SELECT c.chat_id, c.name, c.is_group
       FROM chats c
       JOIN chat_members cm1 ON c.chat_id = cm1.chat_id
@@ -262,40 +268,43 @@ app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
         AND cm1.user_id = $1
         AND cm2.user_id = $2
       LIMIT 1
-    `, [creatorId, targetUser.user_id]);
-    
+    `,
+      [creatorId, targetUser.user_id]
+    );
+
     if (existingChat.rowCount > 0) {
       await client.query("ROLLBACK");
       return res.status(200).json({
         ...existingChat.rows[0],
         message: "Chat already exists",
-        existing: true
+        existing: true,
       });
     }
-    
+
     const chatName = `Chat with ${username}`;
     const chatResult = await client.query(
       `INSERT INTO chats (name, is_group) VALUES ($1, false) RETURNING *`,
       [chatName]
     );
-    
+
     const chatId = chatResult.rows[0].chat_id;
-    
+
     await client.query(
       `INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2), ($1, $3)`,
       [chatId, creatorId, targetUser.user_id]
     );
-    
+
     await client.query("COMMIT");
-    
-    console.log(`Created private chat between users ${creatorId} and ${targetUser.user_id}`);
-    
+
+    console.log(
+      `Created private chat between users ${creatorId} and ${targetUser.user_id}`
+    );
+
     res.status(201).json({
       ...chatResult.rows[0],
       message: "Private chat created successfully",
-      existing: false
+      existing: false,
     });
-    
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error creating private chat:", error);
@@ -312,9 +321,9 @@ app.get("/api/status", (req, res) => {
 });
 
 // Serve React app for all other routes in production
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+if (process.env.NODE_ENV === "production") {
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
   });
 }
 
@@ -336,7 +345,9 @@ io.on("connection", (socket) => {
     try {
       const { chatId, text, userId, username } = data;
 
-      console.log(`Attempting to send message to chat ${chatId} from user ${username}`);
+      console.log(
+        `Attempting to send message to chat ${chatId} from user ${username}`
+      );
 
       const memberCheck = await pool.query(
         "SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2",
@@ -360,9 +371,10 @@ io.on("connection", (socket) => {
       };
 
       io.to(chatId.toString()).emit("receive_message", message);
-      
-      console.log(`Message sent to chat room ${chatId}: "${text}" by ${username}`);
-      
+
+      console.log(
+        `Message sent to chat room ${chatId}: "${text}" by ${username}`
+      );
     } catch (error) {
       console.error("Error sending message:", error);
       socket.emit("error", "Failed to send message");
