@@ -114,6 +114,13 @@ export const chatAPI = {
       const response = await api.post(`/chats/${chatId}/messages`, { text });
       return response.data;
     });
+  },
+
+  deleteChat: async (chatId) => {
+    return handleApiCall(async () => {
+      const response = await api.delete(`/chats/${chatId}`);
+      return response.data;
+    });
   }
 };
 

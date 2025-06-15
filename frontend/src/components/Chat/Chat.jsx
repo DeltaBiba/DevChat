@@ -171,6 +171,22 @@ export const Chat = () => {
     setError("");
   };
 
+  const handleDeleteChat = async (e, chatId) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this chat?")) return;
+
+    const result = await chatAPI.deleteChat(chatId);
+    if (result.success) {
+      setChats(prev => prev.filter(c => c.chat_id !== chatId));
+      if (selectedChat?.chat_id === chatId) {
+        setSelectedChat(null);
+        setMessages([]);
+      }
+    } else {
+      setError(`Failed to delete chat: ${result.error}`);
+    }
+  };
+
   if (!user) {
     return <div className={styles.chatContainer}>Loading...</div>;
   }
@@ -194,6 +210,12 @@ export const Chat = () => {
               >
                 <h2>{chat.name}</h2>
                 {chat.is_group && <span className={styles.groupIcon}>Group</span>}
+                <img
+                  src="/trash.svg"
+                  alt="Delete"
+                  className={styles.deleteChatIcon}
+                  onClick={(e) => handleDeleteChat(e, chat.chat_id)}
+                />
               </div>
             ))
           )}
@@ -256,9 +278,12 @@ export const Chat = () => {
                   msg.sender_id === user?.id ? styles.myMessage : styles.theirMessage
                 }`}
               >
+                <div className={styles.messageHeader}>
+                  <img src="/default-user.svg" alt="avatar" className={styles.avatar} />
+                  <span className={styles.sender}>{msg.sender_name}</span>
+                </div>
                 <div className={styles.messageContent}>{msg.text}</div>
                 <div className={styles.messageInfo}>
-                  <span className={styles.sender}>{msg.sender_name}</span>
                   <span className={styles.timestamp}>
                     {new Date(msg.sent_at).toLocaleTimeString([], {
                       hour: '2-digit',
