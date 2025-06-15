@@ -62,11 +62,16 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-// Fixed route parameter syntax
-router.get("/:chatId(\\d+)/messages", authenticateToken, async (req, res) => {
+// Исправленные маршруты без регулярных выражений
+router.get("/:chatId/messages", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const userId = req.user.user_id;
+
+    // Проверяем, что chatId - это число
+    if (!/^\d+$/.test(chatId)) {
+      return res.status(400).json({ error: "Invalid chat ID" });
+    }
 
     const memberCheck = await pool.query(
       `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
@@ -96,11 +101,16 @@ router.get("/:chatId(\\d+)/messages", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/:chatId(\\d+)/messages", authenticateToken, async (req, res) => {
+router.post("/:chatId/messages", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const { text } = req.body;
     const userId = req.user.user_id;
+
+    // Проверяем, что chatId - это число
+    if (!/^\d+$/.test(chatId)) {
+      return res.status(400).json({ error: "Invalid chat ID" });
+    }
 
     const memberCheck = await pool.query(
       `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
@@ -137,10 +147,15 @@ router.post("/:chatId(\\d+)/messages", authenticateToken, async (req, res) => {
   }
 });
 
-router.delete("/:chatId(\\d+)", authenticateToken, async (req, res) => {
+router.delete("/:chatId", authenticateToken, async (req, res) => {
   try {
     const { chatId } = req.params;
     const userId = req.user.user_id;
+
+    // Проверяем, что chatId - это число
+    if (!/^\d+$/.test(chatId)) {
+      return res.status(400).json({ error: "Invalid chat ID" });
+    }
 
     const memberCheck = await pool.query(
       `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
