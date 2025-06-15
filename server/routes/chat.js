@@ -4,6 +4,7 @@ const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
 
+// Получить все чаты пользователя
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.user_id;
@@ -23,6 +24,7 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
+// Создать новый чат
 router.post("/", authenticateToken, async (req, res) => {
   const client = await pool.connect();
 
@@ -62,110 +64,19 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-// Используем более простые маршруты без сложных параметров
-router.get("/messages/:chatId", authenticateToken, async (req, res) => {
-  try {
-    const { chatId } = req.params;
-    const userId = req.user.user_id;
-
-    // Проверяем, что chatId - это число
-    if (!chatId || isNaN(parseInt(chatId))) {
-      return res.status(400).json({ error: "Invalid chat ID" });
-    }
-
-    const parsedChatId = parseInt(chatId);
-
-    const memberCheck = await pool.query(
-      `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
-      [parsedChatId, userId]
-    );
-
-    if (memberCheck.rowCount === 0) {
-      return res
-        .status(403)
-        .json({ error: "User is not a member of this chat" });
-    }
-
-    const messages = await pool.query(
-      `SELECT m.*, u.username as sender_name
-             FROM messages m
-             JOIN users u ON m.sender_id = u.user_id
-             WHERE m.chat_id = $1
-             ORDER BY m.sent_at ASC
-            `,
-      [parsedChatId]
-    );
-
-    res.status(200).json(messages.rows);
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.post("/messages/:chatId", authenticateToken, async (req, res) => {
-  try {
-    const { chatId } = req.params;
-    const { text } = req.body;
-    const userId = req.user.user_id;
-
-    // Проверяем, что chatId - это число
-    if (!chatId || isNaN(parseInt(chatId))) {
-      return res.status(400).json({ error: "Invalid chat ID" });
-    }
-
-    const parsedChatId = parseInt(chatId);
-
-    const memberCheck = await pool.query(
-      `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
-      [parsedChatId, userId]
-    );
-
-    if (memberCheck.rowCount === 0) {
-      return res
-        .status(403)
-        .json({ error: "User is not a member of this chat" });
-    }
-
-    const result = await pool.query(
-      `INSERT INTO messages (chat_id, sender_id, text)
-             VALUES ($1, $2, $3)
-             RETURNING *`,
-      [parsedChatId, userId, text]
-    );
-
-    const userResult = await pool.query(
-      `SELECT username FROM users WHERE user_id = $1`,
-      [userId]
-    );
-
-    const message = {
-      ...result.rows[0],
-      sender_name: userResult.rows[0].username,
-    };
-
-    res.status(201).json(message);
-  } catch (error) {
-    console.error("Error sending message:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
+// Удалить чат
 router.delete("/:chatId", authenticateToken, async (req, res) => {
   try {
-    const { chatId } = req.params;
+    const chatId = parseInt(req.params.chatId);
     const userId = req.user.user_id;
 
-    // Проверяем, что chatId - это число
-    if (!chatId || isNaN(parseInt(chatId))) {
+    if (!chatId || isNaN(chatId)) {
       return res.status(400).json({ error: "Invalid chat ID" });
     }
 
-    const parsedChatId = parseInt(chatId);
-
     const memberCheck = await pool.query(
       `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
-      [parsedChatId, userId]
+      [chatId, userId]
     );
 
     if (memberCheck.rowCount === 0) {
@@ -174,7 +85,7 @@ router.delete("/:chatId", authenticateToken, async (req, res) => {
         .json({ error: "User is not a member of this chat" });
     }
 
-    await pool.query(`DELETE FROM chats WHERE chat_id = $1`, [parsedChatId]);
+    await pool.query(`DELETE FROM chats WHERE chat_id = $1`, [chatId]);
 
     res.status(200).json({ message: "Chat deleted" });
   } catch (error) {

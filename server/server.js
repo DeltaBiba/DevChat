@@ -335,7 +335,90 @@ app.post("/api/chats/with-user", authenticateToken, async (req, res) => {
   }
 });
 
-// Используем маршруты чатов с правильным базовым путем
+// Сообщения для чата
+app.get("/api/chat-messages/:chatId", authenticateToken, async (req, res) => {
+  try {
+    const chatId = parseInt(req.params.chatId);
+    const userId = req.user.user_id;
+
+    if (!chatId || isNaN(chatId)) {
+      return res.status(400).json({ error: "Invalid chat ID" });
+    }
+
+    const memberCheck = await pool.query(
+      `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
+      [chatId, userId]
+    );
+
+    if (memberCheck.rowCount === 0) {
+      return res
+        .status(403)
+        .json({ error: "User is not a member of this chat" });
+    }
+
+    const messages = await pool.query(
+      `SELECT m.*, u.username as sender_name
+             FROM messages m
+             JOIN users u ON m.sender_id = u.user_id
+             WHERE m.chat_id = $1
+             ORDER BY m.sent_at ASC
+            `,
+      [chatId]
+    );
+
+    res.status(200).json(messages.rows);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/chat-messages/:chatId", authenticateToken, async (req, res) => {
+  try {
+    const chatId = parseInt(req.params.chatId);
+    const { text } = req.body;
+    const userId = req.user.user_id;
+
+    if (!chatId || isNaN(chatId)) {
+      return res.status(400).json({ error: "Invalid chat ID" });
+    }
+
+    const memberCheck = await pool.query(
+      `SELECT * FROM chat_members WHERE chat_id = $1 AND user_id = $2`,
+      [chatId, userId]
+    );
+
+    if (memberCheck.rowCount === 0) {
+      return res
+        .status(403)
+        .json({ error: "User is not a member of this chat" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO messages (chat_id, sender_id, text)
+             VALUES ($1, $2, $3)
+             RETURNING *`,
+      [chatId, userId, text]
+    );
+
+    const userResult = await pool.query(
+      `SELECT username FROM users WHERE user_id = $1`,
+      [userId]
+    );
+
+    const message = {
+      ...result.rows[0],
+      sender_name: userResult.rows[0].username,
+    };
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Используем упрощенные маршруты чатов
 app.use("/api/chats", chatRoutes);
 
 app.get("/api/status", (req, res) => {
